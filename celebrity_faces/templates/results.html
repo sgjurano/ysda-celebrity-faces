@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="card-header">Results:</h2>
+    {% for img in images %}
+        <h4 class="card-body">{{ img.name }}</h4>
+        <div block="inline">
+        <img id="{{ img.name }}" src="{{ img.path }}" style="margin-left: 5px">
+            {% for neighbor in img.neighbors %}
+                <img id="{{ neighbor }}" src="{{ neighbor }}" style="margin-left: 5px">
+            {% endfor %}
+        </div>
+    {% endfor %}
+{% endblock %}

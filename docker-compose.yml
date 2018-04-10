@@ -1,0 +1,22 @@
+version: '2'
+
+services:
+  celebrity-faces:
+    image: celebrity_faces:latest
+    network_mode: host
+    ports:
+      - 8080:8080
+    depends_on:
+      - hnsw-index
+    volumes:
+      - ./img_align_celeba_160:/app/img_align_celeba:ro
+      - ./facenet_models:/app/utils/facemodel/facenet_models
+
+  hnsw-index:
+    image: hnsw_index:latest
+    network_mode: host
+    ports:
+      - 5000:5000
+    volumes:
+      - ./index_data:/app/index_data
+
