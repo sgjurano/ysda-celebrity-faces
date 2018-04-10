@@ -15,17 +15,17 @@
 Если останется время, то планируем так же сделать GAN на основе найденного лица и ближайшего соседа, может быть потюним facenet.
 
 # Использованные статьи и ресурсы
-Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs https://arxiv.org/abs/1603.09320
-Face Recognition using Tensorflow https://github.com/davidsandberg/facenet
-Face Detection using Haar Cascades https://docs.opencv.org/trunk/d7/d8b/tutorial_py_face_detection.html
-Полное практическое руководство по Docker: с нуля до кластера на AWS https://habrahabr.ru/post/310460/
+* Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs https://arxiv.org/abs/1603.09320
+* Face Recognition using Tensorflow https://github.com/davidsandberg/facenet
+* Face Detection using Haar Cascades https://docs.opencv.org/trunk/d7/d8b/tutorial_py_face_detection.html
+* Полное практическое руководство по Docker: с нуля до кластера на AWS https://habrahabr.ru/post/310460/
 
 # Запуск
 Клонируем репозиторий
 ```
 git clone git@github.com:sgjurano/ysda-celebrity-faces.git
 ```
-Скачиваем параметры для индексера, модель для подсчета эмбеддингов и датасет отсюда: https://yadi.sk/d/NkJaLhTS3UHBWd
+Скачиваем параметры для индексера, модель для подсчета эмбеддингов и датасет отсюда (датасет надо распаковать): https://yadi.sk/d/NkJaLhTS3UHBWd
 
 Переходим в директорию репозитория и вызываем
 ```
