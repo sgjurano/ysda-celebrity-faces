@@ -20,25 +20,26 @@ def read_img(img_path):
     if not os.path.exists(img_path):
         raise FileNotFoundError('There is no file: {}'.format(img_path))
 
-    img = misc.imread(img_path)
+    return misc.imread(img_path)
+
+
+def crop_faces(img):
+    yield img
+    for x, y, w, h in found_faces(img): 
+        yield img[y:y + h, x: x+ w ]
+        y_min = max(0, y - int(0.4 * h))
+        x_min = max(0, x - int(0.4 * w))
+        y_max = min(img.shape[0], y + int(1.2 * h))
+        x_max = min(img.shape[1], x + int(1.2 * h))
+        yield img[y_min:y_max, x_min:x_max]
+
+
+def found_faces(img):
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    return img, gray
-
-
-def crop_faces(img, gray, crop_size):
-    if img.shape[1:] == crop_size:
-        return img, gray
-
-    for x, y, w, h in found_faces(gray):
-        yield img[y:y + h, x:x + w]
-
-
-def found_faces(gray):
     face_cascade = cv.CascadeClassifier('{}/haarcascade_frontalface_default.xml'.format(OPENCV_CASCADES_PATH))
     eye_cascade = cv.CascadeClassifier('{}/haarcascade_eye.xml'.format(OPENCV_CASCADES_PATH))
 
     faces = face_cascade.detectMultiScale(gray, 1.3, 2)
-
     for (x, y, w, h) in faces:
         log.info('Found face with coordinates x={}, y={}, width={}, height={}'.format(x, y, w, h))
         roi_gray = gray[y:y + h, x:x + w]
@@ -55,7 +56,7 @@ def resize_photo(img, img_size=None):
     if img_size is None:
         return img
     log.info('Resizing photo from %s to %s', img.shape, img_size)
-    return cv.resize(img, img_size)
+    return misc.imresize(img, img_size, interp='bilinear')
 
 
 def save_img(img, path):
@@ -64,11 +65,11 @@ def save_img(img, path):
 
 
 def main(img_path, img_size=None):
-    img, gray = read_img(img_path)
+    img = read_img(img_path)
     name = os.path.basename(img_path)
     filename, ext = name.rsplit('.')
 
-    cropped_faces = crop_faces(img, gray, img_size)
+    cropped_faces = crop_faces(img)
     photos_path = []
     photos = []
 
@@ -79,13 +80,6 @@ def main(img_path, img_size=None):
     for idx, face in enumerate(cropped_faces):
         img_name = '{}/{}.{}.{}'.format(cropped_path, filename, idx, ext)
         resized_face = resize_photo(face, img_size)
-        save_img(resized_face, img_name)
-        photos_path.append(img_name)
-        photos.append(resized_face)
-
-    if len(photos) == 0:
-        img_name = '{}/{}.{}.{}'.format(cropped_path, filename, 'orig', ext)
-        resized_face = resize_photo(img, img_size)
         save_img(resized_face, img_name)
         photos_path.append(img_name)
         photos.append(np.array(resized_face, dtype=float))
