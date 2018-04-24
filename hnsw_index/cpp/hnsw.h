@@ -20,9 +20,6 @@ class HNSW {
     int max_level = -1;
     Point entry_point = -1;
 
-    Point query_id = -1;
-    Coords query_coords;
-
     Storage storage;
     HNSWGraph graph;
     Levels levels;
@@ -65,9 +62,9 @@ private:
     void MutuallyConnect(Point first, Point second, int level);
 
     PointsSet SelectBestNeighbors(LessDistanceQueue &candidates, Point point, int max_neighbors, int level,
-                                  bool extend_candidates=true, bool keep_pruned=false);
+                                  bool extend_candidates=false, bool keep_pruned=false);
 
-    LessDistanceQueue SearchLevel(Point point, PointsSet &entry_points_set, int max_neighbors, int level);
+    LessDistanceQueue SearchLevel(const Coords &query, PointsSet &entry_points_set, int max_neighbors, int level);
 
     int GenerateLevel();
 

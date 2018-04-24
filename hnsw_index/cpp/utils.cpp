@@ -5,11 +5,11 @@
 #include "utils.h"
 
 
-Distance::Distance(int id, Coords &target, Coords &element) : id(id), dist(0) {
+Distance::Distance(int id, const Coords &target, const Coords &element) : id(id), dist(0) {
     dist = ComputeDistance(target, element);
 };
 
-double Distance::ComputeDistance(Coords &first, Coords &second) {
+double Distance::ComputeDistance(const Coords &first, const Coords &second) {
     double dist = 0;
     for (size_t i = 0; i < first.size(); ++i) {
         dist += std::pow(first[i] - second[i], 2);

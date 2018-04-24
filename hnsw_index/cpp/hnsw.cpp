@@ -50,18 +50,19 @@ void HNSW::InsertBatch(Storage batch) {
 void HNSW::Insert(Point new_point) {
     int level = GenerateLevel();
     levels[new_point] = level;
+    Coords new_point_coords = GetCoords(new_point);
 
     PointsSet entry_points_set = entry_point < 0 ? PointsSet() : PointsSet{entry_point};
 
     for (int cur_level = max_level; cur_level > level; --cur_level) {
-        LessDistanceQueue best_candidates = SearchLevel(new_point, entry_points_set, 1, cur_level);
+        LessDistanceQueue best_candidates = SearchLevel(new_point_coords, entry_points_set, 1, cur_level);
         entry_points_set = {best_candidates.top().id};
     }
 
     int start_level = std::min(max_level, level);
     for (int cur_level = start_level; cur_level >= 0; --cur_level) {
         int M = cur_level > 0 ? max_neighbors : max_neighbors_0;
-        LessDistanceQueue best_candidates = SearchLevel(new_point, entry_points_set, ef_construction, cur_level);
+        LessDistanceQueue best_candidates = SearchLevel(new_point_coords, entry_points_set, ef_construction, cur_level);
         entry_points_set = SelectBestNeighbors(best_candidates, new_point, M, cur_level);
 
         for (Point neighbor : entry_points_set) {
@@ -77,15 +78,14 @@ void HNSW::Insert(Point new_point) {
 }
 
 Points HNSW::KNNSearch(const Coords &query, int K, int ef) {
-    query_coords = query;
     PointsSet entry_points_set{entry_point};
 
     for (int cur_level = max_level; cur_level > 0; --cur_level) {
-        LessDistanceQueue best_candidates = SearchLevel(query_id, entry_points_set, 1, cur_level);
+        LessDistanceQueue best_candidates = SearchLevel(query, entry_points_set, 1, cur_level);
         entry_points_set = {best_candidates.top().id};
     }
 
-    LessDistanceQueue best_candidates = SearchLevel(query_id, entry_points_set, ef, 0);
+    LessDistanceQueue best_candidates = SearchLevel(query, entry_points_set, ef, 0);
 
     Points points;
     while (points.size() < static_cast<size_t>(K) and !best_candidates.empty()) {
@@ -205,10 +205,10 @@ PointsSet HNSW::SelectBestNeighbors(LessDistanceQueue &candidates, Point point, 
     return best_neighbors;
 }
 
-LessDistanceQueue HNSW::SearchLevel(Point point, PointsSet &entry_points_set, int max_neighbors, int level) {
+LessDistanceQueue HNSW::SearchLevel(const Coords &query, PointsSet &entry_points_set, int max_neighbors, int level) {
     std::vector<Distance> distances;
     for (Point n: entry_points_set) {
-        distances.emplace_back(n, GetCoords(point), GetCoords(n));
+        distances.emplace_back(n, query, GetCoords(n));
     }
 
     LessDistanceQueue candidates(distances);
@@ -225,7 +225,7 @@ LessDistanceQueue HNSW::SearchLevel(Point point, PointsSet &entry_points_set, in
             if (visited.find(e) == visited.end()) {
                 visited.insert(e);
 
-                Distance e_dist(e, GetCoords(point), GetCoords(e));
+                Distance e_dist(e, query, GetCoords(e));
                 if (e_dist.dist < neighbors.top().dist || neighbors.size() < static_cast<size_t>(max_neighbors)) {
                     neighbors.push(e_dist);
                     candidates.push(e_dist);
@@ -253,9 +253,5 @@ int HNSW::GenerateLevel() {
 }
 
 Coords& HNSW::GetCoords(const Point query) {
-    if (query == query_id) {
-        return query_coords;
-    } else {
-        return storage[query];
-    }
+    return storage[query];
 }

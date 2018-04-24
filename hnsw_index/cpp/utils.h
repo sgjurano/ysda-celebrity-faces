@@ -11,9 +11,9 @@ struct Distance {
     int id;
     double dist;
 
-    Distance(int id, Coords &target, Coords &element);
+    Distance(int id, const Coords &target, const Coords &element);
 
-    double ComputeDistance(Coords &first, Coords &second);
+    double ComputeDistance(const Coords &first, const Coords &second);
 
     bool operator<(const Distance &other) const;
 
