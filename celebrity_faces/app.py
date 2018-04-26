@@ -36,6 +36,9 @@ def index():
     user_image = request.files['user_image']
     secure_path = os.path.join('uploads', secure_filename(user_image.filename))
 
+    if not os.path.exists('uploads'):
+        os.mkdir('uploads')
+
     if not secure_path.endswith('jpg') and not secure_path.endswith('png'):
         return render_template('error.html', error='Image must be .jpg or .png')
 
