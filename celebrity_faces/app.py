@@ -24,6 +24,9 @@ app.gan = gan_model.load_model('utils/gan/decoder_data')
 DATASET_IMG_SIZE = (160, 160)
 DATASET = 'img_align_celeba'
 
+if not os.path.exists('uploads'):
+    os.mkdir('uploads')
+
 
 def validate_img():
     if 'user_image' not in request.files:
