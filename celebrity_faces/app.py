@@ -9,9 +9,12 @@ import cv2
 from scipy import misc
 import numpy as np
 
+# in other order raises ImportError: dlopen: cannot load any more object with static TLS
 from utils.face_detection import crop_face
+
+# Decoder, LinearBnRelu must be imported!
+from utils.gan.model import load_model as load_gan_model, decode_pairs, Decoder, LinearBnRelu
 from utils.facemodel import model as facenet_model
-from utils.gan import model as gan_model
 
 
 logging.basicConfig(level=logging.INFO)
@@ -19,7 +22,7 @@ log = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.facenet = facenet_model.Facenet('utils/facemodel/facenet_models/20170512-110547')
-app.gan = gan_model.load_model('utils/gan/decoder_data')
+app.gan = load_gan_model('utils/gan/decoder_data')
 
 DATASET_IMG_SIZE = (160, 160)
 DATASET = 'img_align_celeba'
@@ -97,7 +100,7 @@ def copy_neighbors_to_static(neighbors):
 
 def compute_gan_imgs(embeddings, neighbors):
     neighbors_idxs = [n[0] for n in neighbors]
-    return gan_model.decode_pairs(app.gan, list(zip(embeddings, neighbors_idxs)))
+    return decode_pairs(app.gan, list(zip(embeddings, neighbors_idxs)))
 
 
 def save_imgs_to_static(imgs, prefix):
@@ -105,7 +108,7 @@ def save_imgs_to_static(imgs, prefix):
 
     for idx, img in enumerate(imgs):
         path = 'static/img/{}_{}.jpg'.format(prefix, idx)
-        log.info('Saving image to {}'.format(img))
+        log.info('Saving image to {}'.format(path))
         misc.imsave(path, img)
         names.append(path)
 
