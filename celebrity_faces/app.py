@@ -33,15 +33,15 @@ if not os.path.exists('uploads'):
 
 def validate_img():
     if 'user_image' not in request.files:
-        return redirect(request.url)
+        return None, None, redirect(request.url)
 
     user_image = request.files['user_image']
     secure_path = os.path.join('uploads', secure_filename(user_image.filename))
 
     if not secure_path.endswith('jpg') and not secure_path.endswith('jpeg') and not secure_path.endswith('png'):
-        return render_template('error.html', error='Image must be .jpg/.jpeg or .png')
+        return None, None, render_template('error.html', error='Image must be .jpg/.jpeg or .png')
 
-    return user_image.read(), secure_path
+    return user_image.read(), secure_path, None
 
 
 def save_img(data, path):
@@ -120,7 +120,10 @@ def index():
     if request.method == 'GET':
         return render_template('base.html')
 
-    user_img, secure_path = validate_img()
+    user_img, secure_path, error = validate_img()
+    if error:
+        return error
+
     save_img(user_img, secure_path)
 
     photos, photos_path = crop_face.main(secure_path, img_size=DATASET_IMG_SIZE)
