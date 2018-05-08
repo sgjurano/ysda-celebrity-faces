@@ -4,9 +4,10 @@
     {% for img in images %}
         <h4 class="card-body">{{ img.name }}</h4>
         <div block="inline">
-        <img id="{{ img.name }}" src="{{ img.path }}" style="margin-left: 5px">
+            <img id="{{ img.name }}" src="{{ img.path }}" title="{{ img.name }}" style="margin-left: 5px">
+            <img id="{{ gan }}" src="{{ gan }}" title="{{ gan }}" style="margin-left: 5px">
             {% for neighbor in img.neighbors %}
-                <img id="{{ neighbor }}" src="{{ neighbor }}" style="margin-left: 5px">
+                <img id="{{ neighbor }}" src="{{ neighbor }}" title="{{ neighbor }}" style="margin-left: 5px">
             {% endfor %}
         </div>
     {% endfor %}

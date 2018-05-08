@@ -1,10 +1,8 @@
 import os
-import sys
 import numpy as np
 import tensorflow as tf
 
 from scipy import misc
-from skimage import transform
 
 from utils.facemodel import facenet
 

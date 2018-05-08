@@ -8,54 +8,56 @@ from werkzeug.utils import secure_filename
 import cv2
 from scipy import misc
 import numpy as np
-import tensorflow as tf
 
 from utils.face_detection import crop_face
-from utils.facemodel import model
+from utils.facemodel import model as facenet_model
+from utils.gan import model as gan_model
 
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.facenet = model.Facenet('utils/facemodel/facenet_models/20170512-110547')
-
+app.facenet = facenet_model.Facenet('utils/facemodel/facenet_models/20170512-110547')
+app.gan = gan_model.load_model('utils/gan/decoder_data')
 
 DATASET_IMG_SIZE = (160, 160)
 DATASET = 'img_align_celeba'
 
 
-@app.route('/', methods=['POST', 'GET'])
-def index():
-    if request.method == 'GET':
-        return render_template('base.html')
-
+def validate_img():
     if 'user_image' not in request.files:
         return redirect(request.url)
 
     user_image = request.files['user_image']
     secure_path = os.path.join('uploads', secure_filename(user_image.filename))
 
-    if not secure_path.endswith('jpg') and not secure_path.endswith('png'):
-        return render_template('error.html', error='Image must be .jpg or .png')
+    if not secure_path.endswith('jpg') and not secure_path.endswith('jpeg') and not secure_path.endswith('png'):
+        return render_template('error.html', error='Image must be .jpg/.jpeg or .png')
 
-    log.info('Saving user image to %s', secure_path)
-    npimg = np.fromstring(user_image.read(), np.uint8)
+    return user_image.read(), secure_path
+
+
+def save_img(data, path):
+    log.info('Saving user image to %s', path)
+    npimg = np.fromstring(data, np.uint8)
     img = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
     log.info('Image: {}'.format(img))
-    misc.imsave(secure_path, img)
+    misc.imsave(path, img)
 
-    photos, photos_path = crop_face.main(secure_path, img_size=DATASET_IMG_SIZE)
 
+def move_to_static(photos_pathes):
     static_faces = []
-    for face_path in photos_path:
-        filename = os.path.basename(face_path)
-        static_img_path = 'static/img/cropped_{}'.format(filename)
+    for face_path in photos_pathes:
+        static_img_path = 'static/img/cropped_{}'.format(os.path.basename(face_path))
         log.info('Moving %s to %s', face_path, static_img_path)
         os.rename(face_path, static_img_path)
         static_faces.append(static_img_path)
+    return static_faces
 
+
+def compute_embeddings(photos):
     log.info('Computing embeddings for photos')
     embeddings = []
     for photo in photos:
@@ -64,12 +66,18 @@ def index():
         embedding = app.facenet.compute_embedding(photo)[0]
         log.info('Embedding: {}'.format(embedding))
         embeddings.append(embedding.tolist())
+    return embeddings
 
-    knn_req = {'query': embeddings, 'K': 5, 'ef': 100}
+
+def get_neighbors(embeddings, K, ef):
+    knn_req = {'query': embeddings, 'K': K, 'ef': ef}
     knn = requests.get('http://localhost:5000/knn', json=knn_req)
     neighbors = knn.json()
     log.info('Neighbors recieved: {}'.format(neighbors))
+    return neighbors
 
+
+def copy_neighbors_to_static(neighbors):
     neighbors_static = {}
     for neighbor in itertools.chain.from_iterable(neighbors):
         img_name = '{:06d}.jpg'.format(neighbor + 1)
@@ -81,6 +89,45 @@ def index():
             shutil.copyfile(img_path, static_img_path)
             neighbors_static[neighbor] = static_img_path
 
+    return neighbors_static
+
+
+def compute_gan_imgs(embeddings, neighbors):
+    neighbors_idxs = [n[0] for n in neighbors]
+    return gan_model.decode_pairs(app.gan, list(zip(embeddings, neighbors_idxs)))
+
+
+def save_imgs_to_static(imgs, prefix):
+    names = []
+
+    for idx, img in enumerate(imgs):
+        path = 'static/img/{}_{}.jpg'.format(prefix, idx)
+        log.info('Saving image to {}'.format(img))
+        misc.imsave(path, img)
+        names.append(path)
+
+    return names
+
+
+@app.route('/', methods=['POST', 'GET'])
+def index():
+    if request.method == 'GET':
+        return render_template('base.html')
+
+    user_img, secure_path = validate_img()
+    save_img(user_img, secure_path)
+
+    photos, photos_path = crop_face.main(secure_path, img_size=DATASET_IMG_SIZE)
+    static_faces = move_to_static(photos_path)
+
+    embeddings = compute_embeddings(photos)
+    neighbors = get_neighbors(embeddings, K=5, ef=100)
+
+    neighbors_static = copy_neighbors_to_static(neighbors)
+
+    gan_imgs = compute_gan_imgs(embeddings, neighbors)
+    static_gans = save_imgs_to_static(gan_imgs, prefix='gan')
+
     return render_template(
         'results.html',
         images=[
@@ -88,6 +135,7 @@ def index():
                 'name': os.path.basename(face_path),
                 'path': '/{}'.format(face_path),
                 'neighbors': [neighbors_static[n] for n in neighbors[idx]],
+                'gan': static_gans[idx],
             }
             for idx, face_path in enumerate(static_faces)
         ]

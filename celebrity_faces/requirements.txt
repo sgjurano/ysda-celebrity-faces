@@ -7,3 +7,4 @@ sklearn
 scipy
 scikit-image
 six
+torch=0.3.1

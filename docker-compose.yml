@@ -11,6 +11,7 @@ services:
     volumes:
       - ./img_align_celeba_160:/app/img_align_celeba:ro
       - ./facenet_models:/app/utils/facemodel/facenet_models
+      - ./gan_data:/app/utils/gan/decoder_data
 
   hnsw-index:
     image: hnsw_index:latest
