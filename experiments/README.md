@@ -18,3 +18,13 @@
 Параметры предобученной модели лежат по адресу https://yadi.sk/d/hBk0e6gZ3VNnxK в файле `autoencoder_state`.
 
 # Результаты экспериментов
+## Набор №1
+**Полносвязный декодер**
+![Полносвязный декодер](https://github.com/sgjurano/ysda-celebrity-faces/blob/master/experiments/fc_1.png "Полносвязный декодер №1")
+**Свёрточный декодер**
+![Свёрточный декодер](https://github.com/sgjurano/ysda-celebrity-faces/blob/master/experiments/conv_1.png "Свёрточный декодер №1")
+## Набор №2
+**Полносвязный декодер**
+![Полносвязный декодер](https://github.com/sgjurano/ysda-celebrity-faces/blob/master/experiments/fc_2.png "Полносвязный декодер №2")
+**Свёрточный декодер**
+![Свёрточный декодер](https://github.com/sgjurano/ysda-celebrity-faces/blob/master/experiments/conv_2.png "Свёрточный декодер №2")
