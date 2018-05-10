@@ -1,4 +1,5 @@
 import os
+import random
 import shutil
 import logging
 import requests
@@ -105,9 +106,10 @@ def compute_gan_imgs(embeddings, neighbors):
 
 def save_imgs_to_static(imgs, prefix):
     names = []
+    r = random.randint(0, 1e9)
 
     for idx, img in enumerate(imgs):
-        path = 'static/img/{}_{}.jpg'.format(prefix, idx)
+        path = 'static/img/{}_gan_{}_{}.jpg'.format(prefix, r, idx)
         log.info('Saving image to {}'.format(path))
         misc.imsave(path, img)
         names.append(path)
@@ -135,7 +137,7 @@ def index():
     neighbors_static = copy_neighbors_to_static(neighbors)
 
     gan_imgs = compute_gan_imgs(embeddings, neighbors)
-    static_gans = save_imgs_to_static(gan_imgs, prefix='gan')
+    static_gans = save_imgs_to_static(gan_imgs, prefix=os.path.basename(secure_path))
 
     return render_template(
         'results.html',
